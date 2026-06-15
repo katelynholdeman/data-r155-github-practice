@@ -4,6 +4,15 @@ output: html_document
 date: "2026-06-15"
 ---
 
+```{r}
+list.files()
+list.files("data")
+```
+
+Memo: 🗣 The first command shows files and folders in my project folder. The second command checks what is inside the data folder.
+
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
