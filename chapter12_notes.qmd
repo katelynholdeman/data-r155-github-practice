@@ -50,15 +50,116 @@ Important reminder: "🐱 Messages and warnings are often clues. A curious analy
 
 # Vectorized Conditionals
 
+I've used logical conditions to keep some values and drop others, or to replace selected values in place. In this chapter, I will use logical conditions in a third way: to return a result for every element. That is what functions like ifelse() and case_when() do.
 
+Logical conditions in R can do more than select values. They can also be used to return a new vector by assigning an output to each element based on one or more rules. Functions such as ifelse() and case_when() are called vectorized conditional functions because they evaluate conditions element-by-element across a vector and return a new vector of the same length.
+
+Now you will use conditions in a new way: not to drop or replace selected cases, but to return a result for every position. Those results are often used inside mutate() to create or modify columns.
+
+Subsetting keeps some values and drops others. Vectorized conditionals, by contrast, keep all positions and assign each one a result. In other words, subsetting answers “What do I keep?” while vectorized conditionals answer “What value should I return for each element?”
+
+Review section
+
+```{r}
+x <- 1:6
+x > 3
+```
+```{r}
+x[x > 3]
+```
+Note: 🗣 x[x > 3] subsets x to keep only values greater than 3.
+
+"🧐 Notice: You used the same idea with data frames in Chapter 11. The filter() function also applies a logical condition, but at the row level, keeping rows that satisfy the condition and dropping the rest."
+
+More review
+
+Subsetting is used to replace values, called subassignment. When you assign a value to a subset of an object, you are replacing the values in those positions.
+
+```{r}
+x[x > 3] <- 99
+x
+```
+Note: 🗣 x[x > 3] subsets x to keep only the values greater than 3, and x[x > 3] <- 99 uses logical indexing to replace those matching values with 99.
+
+Remember:
+Subsetting keeps only matching values or rows.
+
+Subassignment changes only matching values.
+
+Vectorized conditionals return a result for every position.
+
+Vectorized conditional functions such as ifelse() and case_when() still test conditions element-by-element, but they do not drop nonmatching cases. Instead, they evaluate a condition for each element and return a new vector with one result for every position.
+
+When this new vector is used inside mutate(), a function shown at the end of this chapter, it becomes a new column rather than a subset of the old one.
 
 ## ifelse()
 
+Base R describes ifelse() as returning a value with the same shape as the test, filled from yes or no.
 
+📜 The SYNTAX: ifelse(test, yes, no)
+
+test – logical vector (TRUE/FALSE/NA)
+
+yes – value to insert where test is TRUE
+
+no – value to insert where test is FALSE.
+
+NA – if NA, the result is NA at that position.
+
+Goal: 🎯 Label the vector of numbers greater than 3 as “Large” and others as “Small”.
+
+```{r}
+x <- c(3, 2, 3, 6, 5)
+length(x)
+```
+Note: "🐱 Inline R is worth practicing because it does something unusual: it lets code work inside paragrgaph sentences. I want to see whether Quarto can ask R for the length of x and place the answer directly in my memo."
+
+🗣 `x` is a vector with `{r} length(x)` values.
+
+Memo: I tested render and it worked, showing that "x is a vector with 5 values."
+
+```{r}
+ifelse(test = x > 3, yes = "Large", no = "Small")
+```
+🗣 The output positions for 3 and under are “Small” and numbers higher than 3 are “Large”.
+
+```{r}
+length(ifelse(x > 3, "Large", "Small"))
+```
+Note: "🗣 The result has the same length as x. Nothing was dropped. Each position got a label."
+
+Note about curiosity: "🐱 This is the curiosity move here: I am checking whether ifelse() gave one answer back for each value I started with. I might wonder about the pattern of "Large" and "Small" later, but first I need to understand what this function returns."
+
+💡 Tip: Read this ifelse() statement like ‘If the vector is greater than 3, then return “Large”, otherwise return “Small”.’
+
+📖 x[x > 3] logical subsetting keeps only matches
+
+📖 x[x > 3] <- 99 subassignment replaces only matches
+
+⚡ ifelse(x > 3, "Large", "Small") returns a new vector with a value for every position based on the condition.
 
 ## case_when()
 
+dplyr describes case_when() as a general vectorized if-else that evaluates rules in order and uses the first match for each element. This makes it especially useful when you have several categories to assign.
 
+dplyr::case_when() can do exactly what ifelse() is doing.
+
+📜 The SYNTAX: case_when(condition1 ~ value1, condition2 ~ value2, .default = default_value)
+
+The ~ symbol means “maps to” or “yields”.
+
+The .default argument specifies the value to return when no conditions are TRUE. If you omit .default and no conditions match, case_when() will return NA for those positions.
+
+Goal: 🎯 Label the vector of numbers greater than 3 as “Large” and others as “Small”.
+
+```{r}
+case_when(c(3, 2, 3, 6, 5) > 3 ~ "Large", .default = "Small")
+```
+Note: "🗣 The output positions for 3 and under are “Small” and numbers higher than 3 are “Large”."
+
+⚡ case_when(c(3, 2, 3, 6, 5) > 3 ~ "Large", .default = "Small") returns a new vector with a value for every position based on the condition.
+
+Small additional note (with a lil bit of curiosity that leads into the more than two categories section next): "📖 Why do we need both ifelse() and case_when()? case_when() is usually clearer once you have 3+ categories."
 
 ## More than Two Categories
 
