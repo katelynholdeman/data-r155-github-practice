@@ -163,32 +163,216 @@ Small additional note (with a lil bit of curiosity that leads into the more than
 
 ## More than Two Categories
 
+ifelse() is designed for two categories. If you have more than two, you can nest ifelse() statements inside each other, but this quickly becomes hard to read. case_when() is designed for multiple categories and is much easier to read when you have more than two conditions.
 
+```{r}
+scores <- c(55, 65, 75, 85, 95)
+```
+
+Objective: 🎯 Re-code scores less than 60 as “Low”, scores less than 80 as “Medium”, and all others as “High”.
 
 ### Nested ifelse()
 
+Goal: 🎯 Re-code scores less than 60 as “Low”, scores less than 80 as “Medium”, and all others as “High” using nested ifelse().
 
+```{r}
+ifelse(scores < 60, "Low",
+       ifelse(scores < 80, "Medium", "High"))
+```
+Note: "🗣 This works, but the logic is nested inside the no argument of the first ifelse(), which becomes harder to read as the number of categories grows."
 
 ### Multiple Rule case_when()
 
+case_when() avoids the ugly nesting that happens with repeated ifelse() calls. It is a general vectorized if-else: R checks the rules from top to bottom and uses the first rule that matches each element. That is why the order of the rules matters.
 
+Goal: 🎯 Code scores less than 60 as "Low", scores less than 80 as "Medium", and all others as "High" using case_when().
+
+```{r}
+case_when(scores < 60 ~ "Low",
+          scores < 80 ~ "Medium",
+          TRUE        ~ "High")
+```
+Note: "🗣 This reads more like a set of classification rules: first check for "Low", then check for "Medium", and assign "High" to everything else."
+
+Important!! ⚠️ The order of the rules matters because case_when() uses the first condition that matches.
+
+Note about curiosity: "🐱 This is a good place to be curious and test what happens when the rules are in the wrong order. The goal is not to break the code randomly; the goal is to see how case_when() makes its decision."
+
+```{r}
+case_when(
+  scores < 80 ~ "Medium",
+  scores < 60 ~ "Low",
+  TRUE       ~ "High"
+)
+```
+Note: "🗣 This does not work as intended. Any score less than 60 also satisfies scores < 80, so those values are labeled "Medium" before R ever checks the "Low" rule."
+
+💡 Tip: write rules from most specific to more general, and end with a default rule such as TRUE ~ "High".
+
+
+
+So far, ifelse() and case_when() have returned new vectors. That is useful, but most data work happens inside data frames. Next, you will use mutate() to store those new values as columns.
 
 # mutate()
 
+So far, case_when() has returned a new vector of labels. In real data analysis, you usually want to store that result in a data frame as a new column. That is what mutate() does.
 
+mutate() creates new columns that are functions of existing columns. It can also modify an existing column if you reuse the same column name.
+
+📜 The SYNTAX:
+
+mutate(data, new_col = expression)
+
+Or with piping
+
+name_data <- data %>% mutate(new_col = expression)
+
+data is the data frame you are working with.
+
+new_col is the name of the new column you want to create.
+
+expression is the vector or calculation you want to store in that column.
+
+You can think of mutate() as saying: “Take this data frame, and add a new column based on these existing columns.”
+
+IMPORTANT!
+
+📖 The key idea is this:
+
+A new name on the left side of = adds a new column.
+
+An existing name on the left side of = overwrites that column.
+
+The right side of = tells R what values to put there.
 
 ## Column Copy
 
+Goal: 🎯 Create a new column that is a copy of am in mtcars.
 
+```{r}
+names(mtcars)
+```
+```{r}
+mtcars2 <- mtcars %>% 
+  mutate(new_column_copy = am)
+```
+
+Note: "🗣 In a new data set called mtcars2, a new column named new_column_copy is created that is identical to the am column."
+
+```{r}
+names(mtcars2)
+```
+
+Note: "This simple example shows that mutate() can create a new column from an existing one. The right side of mutate() is for calculations or rule-based expressions on existing columns. We’ll start by using calculations inside mutate() to create a new column."
 
 ### mutate() with Arithmetic
 
+Doing unit conversions is a common data analyst task. Here it is in action.
 
+```{r}
+measurements <- data.frame(height_in = c(60, 65, 70))
+measurements
+```
+
+Note about curiosity: "🐱 This is a small but useful thing to wonder about: can Quarto pull a column name directly from R into a sentence? Let’s try it before we add a new column."
+
+Memo: 🗣 The `measurements` data frame has one column: `{r} colnames(measurements)`.
+
+Objective: 🎯 Create a new column called height_cm that converts inches to centimeters (1 inch = 2.54 cm).
+
+```{r}
+measurements %>%
+  mutate(height_cm = height_in * 2.54)
+```
+
+Note: 🗣 mutate(height_cm = height_in * 2.54) creates a new column called height_cm. Each value in height_cm is calculated from the matching value in height_in.
 
 ### case_when() inside mutate()
 
+The right side of mutate() can also be a rule-based expression. One common example is case_when() which lets you build a new categorical variable from an existing numeric variable.
 
+```{r}
+student_scores <- data.frame(scores = c(55, 68, 72, 83, 91))
+```
+
+Goal: 🎯 Create a new column called score_level that labels each score from scores as "Low", "Medium", or "High".
+
+```{r}
+student_scores <- student_scores %>%
+  mutate(
+    score_level = case_when(
+      scores < 60 ~ "Low",
+      scores < 80 ~ "Medium",
+      TRUE        ~ "High"
+    )
+  )
+```
+
+🗣 mutate() adds a new column called score_level. The values in that column come from the rules inside case_when().
+
+student_scores is the data frame.
+
+mutate(...) adds a new column.
+
+score_level = names that new column.
+
+case_when(...) decides what label to return for each row based on the value in scores.
+
+```{r}
+head(student_scores)
+```
+🗣 `student_scores` has the columns `{r} paste(names(student_scores), collapse = " and ")`.
+
+Note about curiosity: "🐱 Looking at this code, I might wonder how paste() works. Rather than guessing, I could check ?paste in RStudio’s Help pane. names(student_scores) gets the column names, and paste(..., collapse = " and ") combines them into a single piece of text separated by the word “and”. Notice the space before and after the and between the quotes `” and “. Those spaces are included in the output, so the column names appear with space around the word”add”."
+
+🛠 Break Things!
+
+🗣 `student_scores` has the columns `{r} paste(names(student_scores), collapse = "and")`.
+
+
+
+The mutate() + case_when() duo is a powerful way to create new variables based on complex rules. You can have as many conditions as you need, and you can use existing columns in your data frame to build those rules.
+
+In some situations, you may want to overwrite an existing column instead of creating a new one. That is also possible with mutate(), as the next section shows.
 
 ## Overwrite Column Values
 
+mutate() will overwrite an existing column when you reuse the same column name on the left side of =. We’ll use case_when() to recode the values in the am column of mtcars from numeric to categorical labels.
 
+Note about curiosity: "🐱 Overwriting is a place to slow down and be curious before running the code. I want to know what the original values are first, because after overwriting, those original 0 and 1 values will no longer be in the new data frame."
+
+Goal: "🎯 Recode the am column in mtcars from 0/1 to “Automatic”/“Manual”."
+
+```{r}
+unique(mtcars$am)
+```
+Note: "🗣 am is a numeric column with two unique values: 0 and 1."
+
+```{r}
+cars_overwrite <- mtcars %>%
+  mutate(
+    am = case_when(
+      am == 0 ~ "Automatic", 
+      TRUE ~ "Manual")
+    )
+```
+
+```{r}
+unique(cars_overwrite$am)
+```
+
+🗣 The `am` column in `cars_overwrite` has the unique values: `{r} unique(cars_overwrite$am)`.
+
+🗣 The am column has been changed from 0/1 to "Automatic"/"Manual"
+
+IMPORTANT!!
+
+📖 Overwrite Key Takeaway
+
+In every example above, mutate() followed the same pattern:
+
+the left side of = named the output column
+
+the right side of = created its values
+
+When the left side is a new name, R adds a new column. When the left side reused an existing name, R overwrites that column.
