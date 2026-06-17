@@ -14,11 +14,39 @@ format:
 
 # Quarto Notes
 
+In the heading, "toc" (aka table of contents) where true adds a table of contents automatically to the document. "toc-depth" with a value of 2 tells Quarto to include level 1 and 2 headings in that table of contents. Finally, "number-sections" where true adds section numbers to your headings in the rendered doc. (note: toc-depth with a value of 2 is a good default, keeps it organized without making it too crowded).
 
+Quarto also lets you place small pieces of R code directly inside normal sentences. This is called inline code.
+
+Inline code is useful when you want your written memo to automatically include a value computed by your R code. Quarto evaluates inline code during rendering, so the sentence stays up to date with your analysis.
+
+In Quarto, inline code uses one pair of backticks and the engine name inside the backticks. For R, the pattern is:
+
+backtick {r} space expression backtick
+
+Note: "🐱 This is a good place to be curious about how Quarto works. The code is written inside a sentence, but when the report renders, Quarto runs the code and shows the result. Very cool!"
+
+🎯 Imagine you want to write a sentence that says how many rows are in the filtered mtcars dataset. Instead of hardcoding the number, you can use inline code to compute it.
+
+```{r}
+library(dplyr)
+num_rows <- mtcars %>%
+  filter(cyl == 6) %>%
+  nrow()
+```
+
+Memo: 🗣 The filtered dataset has `{r} num_rows` rows.
+
+In this chapter, use inline R code when you want your memo to report a computed value such as a vector length, category count, or converted measurement.
 
 # Load Packages
 
+```{r}
+library(dslabs)  # Data science labs package
+library(dplyr)   # Data manipulation package
+```
 
+Important reminder: "🐱 Messages and warnings are often clues. A curious analyst asks what R is trying to tell them before hiding the message. Check that your packages loaded correctly."
 
 # Vectorized Conditionals
 
