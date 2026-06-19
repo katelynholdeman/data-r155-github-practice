@@ -1,0 +1,202 @@
+---
+title: "Chapter 13 Practice"
+author: "Katelyn Holdeman"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    number-sections: true
+    embed-resources: true
+---
+```{r}
+library(dslabs)
+library(dplyr)
+```
+
+
+## Task 1
+
+Using the stars dataset, compute mean_temperature and mean_magnitude for each star type. Name the result twinkle_twinkle.
+
+```{r}
+data(stars)
+?stars
+colnames(stars)
+unique(stars$type)
+```
+🗣 Add Comments: Which column is the grouping variable? Which columns are the numeric summary variables?
+
+```{r}
+twinkle_twinkle <- stars %>%
+  group_by(type) %>%
+  summarize(
+    mean_temperature = mean(temp),
+    mean_magnitude   = mean(magnitude),
+    .groups = "drop"
+  )
+```
+
+```{r}
+twinkle_twinkle
+is_grouped_df(twinkle_twinkle)
+```
+
+Comment: The "mean_temperature" column represents the mean or average temperature for each type of star. The "mean_magnitude" column is similar and represents the mean magnitude for each type of star. Finally, the first column shows the 10 types of stars on the very left of the table. The output shows one row for each star type (10 rows in total).
+
+## Task 2
+
+🫒 Single grouping + three statistics
+
+Pick one numeric fatty acid in the olive dataset, such as palmitic, oleic, or another fatty-acid variable. Group by region, then calculate:
+
+the mean of your chosen fatty acid,
+the standard deviation of your chosen fatty acid, and
+the number of rows in each region.
+
+Store the result as Olive_Garden.
+
+```{r}
+data(olive)
+?olive
+colnames(olive)
+unique(olive$region)
+```
+Memo: I am going to summarize the "oleic" fatty acid column. I will use the "region" column as the grouping variable.
+
+```{r}
+fatty_acid <- "oleic" # You Pick!
+
+# Pick from operators: `=`, `<-`, `%>%`, `|`, `&`, `,` `(`, and `)`
+Olive_Garden <- olive %>%
+  group_by(region) %>%
+  summarize(
+    mean_value = mean(.data[[fatty_acid]], na.rm = TRUE),
+    sd_value   = sd(.data[[fatty_acid]], na.rm = TRUE),
+    n          = n(),
+    .groups = "drop"
+  )
+```
+
+```{r}
+Olive_Garden
+arrange(Olive_Garden, desc(mean_value))
+is_grouped_df(Olive_Garden)
+```
+
+Comment: There are three values for each reason: mean_value, sd_value, and n. The region of Northern Italy has the highest mean value for oleic acid: 77.93053.
+
+Memo: I went back and double checked the column names and how many regions were in the original dataset. For some reason, I thought there were more than 3 regions in the dataset and I made a mistake in my code. But the pre-check was helpful to refer back to and make sure there really were only 3 regions in the original dataset.
+
+## Task 3
+
+🧮 Counting unique values
+
+Use unique() and length() to determine how many distinct values appear in a column.
+
+For the us_contagious_diseases dataset from dslabs, determine the number of unique diseases in the column disease.
+
+```{r}
+data("us_contagious_diseases")
+?us_contagious_diseases
+colnames(us_contagious_diseases)
+```
+
+```{r}
+unique(us_contagious_diseases$disease)
+length(unique(us_contagious_diseases$disease))
+```
+
+🗣 There are `r length(unique(us_contagious_diseases$disease))` unique diseases within the `disease` column of the `us_contagious_diseases` dataset. They are `r paste(unique(us_contagious_diseases$disease), collapse = ", ")`.
+
+🪞 Reflect: Why do you need both unique() and length() here? What does each function contribute?
+
+The function "unique()" makes sure there are no duplicated values/names or rows in a dataset. You also need the "length()" function to measure the length of the dataset. When you use both of these functions, you can measure the length of a dataset while filtering out any potential duplicated items.
+
+Now determine the number of unique states in the column state.
+
+```{r}
+unique(us_contagious_diseases$state)
+length(unique(us_contagious_diseases$state))
+```
+🗣 There are `r length(unique(us_contagious_diseases$state))` unique states within the `state` column of the `us_contagious_diseases` dataset.
+
+## Task 4
+
+### Step 1
+
+Instructions: If there are 51 states in the dataset, and you assume every state has data for all 7 diseases, how many groups will group_by(state, disease) create?
+
+A. \(51 + 7 = 58\) groups
+
+B. \(51 \times 7 = 357\) groups
+
+C. \(\frac{51}{7} \approx 7\) groups
+
+D. \(51 - 7 = 44\) groups
+
+E. \(51^7\) groups
+
+💬 Make a prediction: Choose one answer and explain why you chose it before running the code.
+
+I predict that the answer is B and that there will be 357 groups. I chose this answer because it matches the same formula/thinking from the guided activity where you are trying to figure out all the possible combinations of 2 groups (in that scenario, the numbers were smaller with 3 x 2 = 6).
+
+### Step 2
+
+Test your prediction.
+
+Use group_by() with both state and disease, then use count() to count the number of rows for each state-and-disease combination. Store the result as categorical_counts.
+
+```{r}
+categorical_counts <- us_contagious_diseases %>%
+  group_by(state, disease) %>%
+  count()
+```
+
+```{r}
+categorical_counts
+nrow(categorical_counts)
+```
+
+Comment: My prediction was correct! "categorical_counts" contains 357 rows.
+
+## Task 5
+
+From us_contagious_diseases, calculate the national mean of count for each disease. Then keep only the three diseases with the highest national_mean_count. Store the result as Infectious_Burden.
+
+💡 Tip: Arrange the diseases by their national mean and keep the top three.
+
+```{r}
+Infectious_Burden <- us_contagious_diseases %>%
+  group_by(disease) %>%
+  summarize(
+    national_mean_count = mean(count, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(national_mean_count)) %>%
+  slice_head(n = 3)
+```
+
+```{r}
+Infectious_Burden
+nrow(Infectious_Burden)
+is_grouped_df(Infectious_Burden)
+```
+
+Comment: The three diseases with the highest national mean counts were "Measles," "Pertussis," and "Mumps" (I kept all the capitalization that was in the dataframe to make sure I didn't confuse myself with any inconsistency in capitalization and/or spelling). I know the output only kept three rows due to the "nrow(Infectious_Burden)" check I used, which showed that there were 3 rows in the "Infectious_Burden" vector.
+
+## Task 6
+
+📝 Final reflection
+
+Write a short paragraph explaining why group_by() needs to come before summarize() when you want separate results for each group.
+
+When you want separate results for each group in a dataset, it is important to use group_by() before summarize(). group_by() tells R to organize the dataset into different groups based on a variable or more than one variable. It is crucial to have these groups in place before summarizing with summarize(). This way, you will be able to find means within each group. For example, if you were trying to figure out the mean MPG for 3 different groups of cars (based on their amount of cylinders), you first need to have the data grouped into cars based on their number of cylinders. Summarizing the whole dataset is different than summarizing within groups. Summarizing within groups is more specific and investigates how a mean can change across different groups and levels of variables.
+
+🪞 Reflect: Include one sentence about curiosity in this chapter. What did curiosity help you notice, predict, check, or decide not to pursue?
+
+I was curious about investigating the data and means for states in the Pacific Northwest (such as Idaho, Washington, and Oregon) in the us_contagious_diseases dataset. I wonder if the means for diseases in general or specific diseases like measles would follow similar patterns. This might lead to some sort of prediction about similar geography, location, climate, and perhaps wildlife and how these variables might lead to similar patterns of disease in the Pacific Northwest over time. I decided not to pursue this because I wanted to make sure I completed this practice space and that seemed like a long rabbit hole to go down. But it would be interesting to take a look at!
+
+## Task 7
+
+Self-check checklist completed!
