@@ -13,28 +13,375 @@ format:
 
 # Loading Packages
 
+```{r}
+library(dslabs)  # Data science labs package
+library(dplyr)   # Data manipulation package
+```
 
 
 # Counts, Center, and Spread
 
+Before using summarize() and count(), it helps to review a few data words you have likely seen before. You do not need to calculate these by hand in this chapter. You do need to understand what they mean so you can choose the right function and explain your results.
 
+🐱 Curiosity as an intellectual virtue means choosing where to spend your attention. If these review terms feel rusty, pause here and use this section to refresh them. If you already practiced these ideas (e.g., in the Data Understanding Notebook activity), you can skip this review section and jump to dplyr’s count(). Return if you need a reminder.
+
+
+A numeric variable stores numbers that can be measured or calculated, such as mpg, height, or test score.
+
+A categorical variable stores labels or group names, such as state, disease, or cylinder count.
+
+In this chapter, we often group by a categorical variable and then summarize a numeric variable.
+
+
+A count tells you how many observations there are.
+
+For a whole dataset, count means the total number of rows.
+
+For grouped data, count means the number of rows in each group.
+
+If you want to know how many cars have 4 cylinders, 6 cylinders, or 8 cylinders, you are asking for a count.
+
+
+Center describes a typical value.
+
+Spread describes how much the values vary.
+
+The standard deviation tells you how far values tend to be from the mean.
+
+A small standard deviation means the values are packed closely together.
+
+A large standard deviation means the values are more spread out.
+
+
+use count when you want to know how many rows are in a dataset or group
+
+use mean when you want an average
+
+use standard deviation when you want to describe spread
+
+use a categorical variable to make groups
+
+use a numeric variable when calculating statistics like mean or standard deviation
 
 # count()
 
+You can use count() to quickly count rows for each category or combination of categories.
 
+count() is especially useful when you want a frequency table.
+
+?count
+
+📜 The SYNTAX
+
+data %>% count(variable_name)
+
+Or, for more than one grouping variable:
+
+data %>% count(variable1, variable2, ...)
+
+## Count one variable
+
+🎯 Count how many cars have each cylinder value.
+
+```{r}
+mtcars %>%
+  count(cyl)
+```
+
+🗣 The code above counts how many rows fall into each value of cyl. The result is a new table with one row per cylinder value and a column named n that stores the counts.
+
+Note about curiosity: "🐱 This is the curiosity move here: before I compare or explain anything, I want to know what categories are in the data and how many rows belong to each one. This step helps me understand the data before I ask a bigger data question."
+
+Test render question: Does the table show one row for each cylinder value and a column named n?
+
+### count() versus length()
+
+length() counts how many values are in a vector.
+
+count() counts rows in a data frame for each category or combination of categories.
+
+### count() with sorting
+
+Sometimes you want to see the biggest groups first.
+
+🎯 Count cars by cylinder and sort from largest count to smallest count.
+
+```{r}
+mtcars %>%
+  count(cyl, sort = TRUE)
+```
+
+Memo: 🗣 sort = TRUE arranges the result so the largest count appears first. The counts are the same as before; only the row order changed.
+
+(does that mean that FALSE makes the smallest count appear first?)
+
+## Count multiple variables
+
+You can also count combinations of categories.
+
+🎯 Count how many cars fall into each combination of cylinder count and transmission type.
+
+🧐 Notice: In mtcars, am is a coded transmission variable. A value of 0 means automatic, and a value of 1 means manual.
+
+```{r}
+mtcars %>%
+  count(cyl, am)
+```
+
+🗣 count(cyl, am) creates one row for each unique combination of cyl and am, then counts how many rows are in each combination.
+
+
+This is useful when one grouping variable is not enough.
+
+If our question is only “How many rows are in each category?”, count() is enough. But what if our question asks about averages, maximums, spread, or other statistics? We’ll need summarize().
 
 # summarize()
 
+You can use summarize() to compute summary statistics like the mean, median, etc.
 
+?summarize
+
+📜 The SYNTAX
+
+data %>% summarize(new_column_name = some_operation(column_name))
+
+🎯 Find the overall mean mpg for all cars.
+
+```{r}
+mtcars %>% 
+  summarize(mean_mpg = mean(mpg))
+```
+Comment: 🗣 The code above creates a new column called mean_mpg that contains the mean of the mpg column from the mtcars dataset.
+
+We name the new column using new_name = calculation.
+
+🎯 Find several summary statistics for mpg: mean, max, and count of cars.
+
+```{r}
+mtcars %>% 
+  summarize(mean_mpg = mean(mpg),
+            max_mpg = max(mpg),
+            count = n())
+```
+Important! Do not put pipes %>% inside summarize(). Inside the function, separate each summary calculation with a comma ,.
+
+Check: Does the output show one row with three summary columns: mean_mpg, max_mpg, and count? (yep!)
+
+
+🤔 summary() is a base R function that gives a quick overall description of an object, such as basic statistics for each variable in a data frame. summarize() from dplyr is used to create your own summary results, usually after group_by(), such as the mean or count for each group.
+
+
+## Count vs. Summarize
+
+You can often get the same result in two ways.
+
+Goal: 🎯 Use group_by() and summarize() to produce the same counts by cylinder.
+
+```{r}
+mtcars %>%
+  group_by(cyl) %>%
+  summarize(n = n())
+```
+
+🗣 This gives the same idea as count(cyl). The difference is that count() is shorter and faster to write when your main goal is just to count rows.
+
+Use count() when you mainly want frequencies. Use group_by() with summarize() when you want to calculate other statistics too, such as mean and standard deviation.
 
 # group_by()
 
+group_by() changes the behavior of summary functions.
 
+📜 The SYNTAX
+
+data %>% group_by(variable1, variable2, ...) %>% some_operation()
+
+Goal: 🎯 Find the mean mpg for each cylinder count.
+
+```{r}
+cyl_means <- mtcars %>%
+  group_by(cyl) %>%
+  summarize(mean_mpg = mean(mpg))
+```
+
+Note: 🗣 group_by(cyl) splits the cars into groups based on cylinder count, and summarize() calculates mean(mpg) for each group. mean_mpg is the name of the new summary column.
+
+On another note: 🧐 We chain group_by() and summarize() together using the pipe operator %>%. First, group_by(cyl) tells R to work separately by cylinder value. Then, summarize() calculates the mean mpg for each group.
+
+```{r}
+cyl_means
+```
+We’re asking, “Does the mean change across groups?” Grouping helps us ask a sharper question without leaving the learning goal.
+
+Check: Does cyl_means print as a small table with one row per cylinder value? (yep!)
+
+🤔 Grouping cars by cyl is useful because cars with different numbers of cylinders often have different fuel efficiency, so one overall average mpg would hide those differences. By grouping first, you can compare the typical mpg for 4-, 6-, and 8-cylinder cars separately.
+
+## Explicit vs. Default Naming
+
+If you do not give the summary column a name, dplyr uses the summary expression itself as the column name by default. So summarize(mean(mpg)) creates a column named mean(mpg) instead of a cleaner name like mean_mpg.
+
+Goal: 🎯 Find the mean mpg for each cylinder count without naming the summary column.
+
+```{r}
+mtcars %>%
+  group_by(cyl) %>%
+  summarize(mean(mpg))
+```
+
+Comment: 🗣 The default column name is the code itself: mean(mpg). Default names can be confusing when reading or sharing results, so naming summary columns makes tables clearer.
+
+🐱 Notice the problem and build the habit of naming summary columns clearly.
 
 # Multiple Statistics
 
+Goal: 🎯 Create several summary columns in one summarize() call, separated by commas.
 
+Note about curiosity: "🐱 This is useful curiosity: one statistic rarely tells the whole story. A mean tells me the center, a standard deviation tells me about spread, and n() tells me how many rows were used for each group."
+
+(Use ?n to learn about the n() function.)
+
+```{r}
+?n
+```
+
+```{r}
+cyl_stats <- mtcars %>%
+  group_by(cyl) %>%
+  summarize(mean_mpg = mean(mpg),
+            sd_mpg   = sd(mpg),
+            n        = n())
+```
+
+```{r}
+cyl_stats
+```
+
+Note: 🗣 n() counts how many rows are in each group created by group_by().
+
+Additional note: "It is similar to count() because both tell you how many observations are in a group, but n() is used inside summarize() when you are also calculating other statistics."
+
+Quick distinction with length() and n(): length() counts the number of elements in an object. For a vector, that means the number of values. For a data frame, length() counts columns, not rows. That is why n() is the clearer tool here.
+
+Check: Does the output show one row for each cylinder value and three summary columns: mean_mpg, sd_mpg, and n? (yep!)
 
 # Multiple Variables
 
+group_by() with one column creates one group for each unique value in that column. group_by() with two columns creates one group for each unique combination of values.
 
+Reminder about curiosity: "🐱 This is a good moment to make a prediction before running the code. Curiosity is pausing long enough to make a reasonable guess, then checking that guess against the output."
+
+❓ How many groups will group_by(cyl, am) create?
+
+Goal: 🎯 Predict how many groups will be created by group_by(cyl, am) before running the code.
+
+My prediction: There are three rows for the cylinder category. As for the transmission, there are only 2 options (manual (1) or automatic (0)). I wonder if it would create three more rows and 2 more groups for transmission, so 6 plus 4 = 10. But I think that might be off.
+
+```{r}
+sort(unique(mtcars$cyl))
+```
+
+```{r}
+sort(unique(mtcars$am))
+```
+Note: "🗣 Two variables with 3 and 2 unique values can create \(3 \times 2 = 6\) possible groups." (so, I was fairly off with my prediction. I had a solid ish idea at the beginning, but I didn't think about how they were possible combinations of the two variables and their potential values.)
+
+Goal: 🎯 Find the mean mpg for each combination of cylinder count and transmission type.
+
+```{r}
+mtcars %>%
+  group_by(cyl, am) %>%
+  summarize(avg_mpg = mean(mpg),
+            count = n())
+```
+
+Group 1: cyl = 4, am = 0 (4-cylinder automatic cars)
+
+Group 2: cyl = 4, am = 1 (4-cylinder manual cars)
+
+Group 3: cyl = 6, am = 0 (6-cylinder automatic cars)
+
+Group 4: cyl = 6, am = 1 (6-cylinder manual cars)
+
+Group 5: cyl = 8, am = 0 (8-cylinder automatic cars)
+
+Group 6: cyl = 8, am = 1 (8-cylinder manual cars)
+
+
+Check: Does the output show one row for each cyl and am combination? (yep! yay!)
+
+(Note: If you see a message about grouped output, keep going. The next section explains what that message means.)
+
+## 8.1 ungroup()
+
+When you summarize data that has more than one grouping variable, dplyr may keep part of the grouping structure in the result. That leftover grouping can affect later code, so it is important to check whether your summary table is still grouped.
+
+(Note about curiosity and what we are doing now: 🐱 We are asking, “What did R keep behind the scenes, and could that affect my next step?”)
+
+### A. Default behavior: keeps earlier groups
+
+Goal: 🎯 Show that with two grouping variables, summarize() keeps the earlier group by default.
+
+```{r}
+# A) Default behavior: "drop_last" (keeps earlier groups)
+cyl_gear_stats <- mtcars %>%
+  group_by(cyl, gear) %>%
+  summarize(mean_mpg = mean(mpg))   # no .groups set
+```
+
+```{r}
+group_vars(cyl_gear_stats)  # what groups remain?
+```
+```{r}
+is_grouped_df(cyl_gear_stats) # expect TRUE
+```
+Note: 🗣 The default behavior is .groups = "drop_last". That means summarize() drops the last grouping variable, gear, but keeps the earlier grouping variable, cyl.
+
+
+You’ll want to be explicit when you do not want any grouping left.
+
+### B. Make it explicit inside summarize()
+
+Goal: 🎯 Return a plain, ungrouped table by telling summarize() to drop all groups.
+
+```{r}
+# B) Make it explicit: drop *all* groups in the result
+cyl_gear_stats_drop <- mtcars %>%
+  group_by(cyl, gear) %>%
+  summarize(mean_mpg = mean(mpg), .groups = "drop")
+```
+
+Important note about formatting! 🗣 The .groups argument starts with a period and "drop" must be written in quotation marks.
+
+```{r}
+group_vars(cyl_gear_stats_drop)  # expect character(0)
+```
+```{r}
+is_grouped_df(cyl_gear_stats_drop) # expect FALSE
+```
+Note: 🗣 Using .groups = "drop" tells summarize() to remove all grouping after the summary operation, resulting in a plain data frame without any grouping structure.
+
+Check: Does group_vars(cyl_gear_stats_drop) return character(0) and does is_grouped_df(cyl_gear_stats_drop) return FALSE? (yep!)
+
+### C. Alternative: drop groups after summarizing
+
+Goal: 🎯 Achieve the same ungrouped result by using ungroup() after summarize()
+
+```{r}
+# C) Alternative: drop groups after summarizing
+cyl_gear_stats_ungroup <- mtcars %>%
+  group_by(cyl, gear) %>%
+  summarize(mean_mpg = mean(mpg)) %>%
+  ungroup()
+```
+
+```{r}
+group_vars(cyl_gear_stats_ungroup)  # expect character(0)
+```
+```{r}
+is_grouped_df(cyl_gear_stats_ungroup) # expect FALSE
+```
+Note: 🗣 Using ungroup() after summarize() removes all grouping from the resulting data frame. This gives the same ungrouped result as using .groups = "drop" inside summarize().
+
+🐱 When we are done summarizing by groups, we want remove grouping for a plain table.
+
+Pick one method and use it consistently: - Use .groups = "drop" when you want to remove grouping inside summarize(). - Use ungroup() when you want to remove grouping as a separate step after summarizing.
