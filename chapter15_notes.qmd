@@ -3,3 +3,465 @@ title: "Chapter 15 Notes"
 format: html
 editor: visual
 ---
+
+# 3 Distribution of Sums
+
+Histograms = the count of values in each bin (or bar) of a histogram
+
+Distribution = can be uniform, symmetric, skewed, or bimodal
+
+1.  Uniform = all bars have approximately the same height, indicating that all values are equally likely.
+
+2.  Normal = this bell-shaped (symmetric) distribution is the left and right sides of the histogram are nearly mirror images of each other. Mean and mediam are approx equal.
+
+3. Skewed Right = the right tail is longer than the left tail. indicates that there are a few high values that pull the mean to the right. Positive skewness. The mean is more right than the median due to extreme values.
+
+4. Skewed Left = the left tail is longer than the right tail. indicates that there are a few low values that pull the mean to the left. Negative skewness.
+
+5. Bimodal (Split Distribution) = the distribution has 2 distinct peaks or modes. Suggests that the data might come from 2 diff groups or processes. The mean and median may fall between the peaks, providing misleading summary statistics. Bimodal distributions often indicate hidden subpopulations.
+
+# 4 Warm-Up
+
+A data analyst uses "set.seed()" to ensure that random processes like sampling or simulation produce the same results each time the code is run (from top to bottom). This reproducibility = crucial for debugging, collaboration, and verifying results, as it guarantees consistency across analyses and users.
+
+```{r}
+set.seed(2025) # for reproducibility
+```
+
+IMPORTANT
+If you re-run code more than once within your doc, your values will not be the same. It is only the same when you run the code from top to bottom in one session.
+
+# 5 Simulating
+
+Probability = the study of random outcomes. To understand it, need to be able to simulate random outcomes and inspect those results.
+
+R provides powerful tools for simulating random data, which allows us to explore concepts like sampling variability, distributions, and the effects of bias.
+
+## 5.1 Coin Flips
+
+This example = simulate flipping a coin 1,000 times and counting how many times it lands on tails. This simple experiment helps us understand the concept of a sample space, the role of randomness, and how to verify our results.
+
+Goal: 🎯 Flip 💰 1,000 fair coins (0 = heads, 1 = tails) and count tails.
+
+Sample Space “\(S\)” is a collection (or set) of all possible outcomes in a random experiment.
+
+Set Notation: \(S\) = {Head, Tail}
+
+First step: 🎯 Create the data through a simulation
+
+```{r}
+# sample(x, size, replace = FALSE, prob = NULL)
+coins <- sample(x = 0:1, size = 1000, replace = TRUE)
+```
+
+x = 0:1 means that we're sampling from either 0 or 1. For this situation, we've decided that 0 = heads and 1 = tails. We set size = 1000 to flip the coin 1,000 times. We set replace = TRUE bc we "put the coin back" each flip (into the pool of possible values for the next draw). This allows for the same value to be drawn multiple times, which is essential for simulating independent events like coin flips.
+
+```{r}
+unique(coins) # values in our data set
+length(coins) # total number of flips
+typeof(coins) # type of object
+```
+Coins contains 0 and 1 values where 1 represents tails of a coin flip. There are 1000 values in the integer vector.
+
+Predict.: How many tails are in our data set?
+
+Next: 🎯 Use sum to count the number of tails because 1 = tails
+
+```{r}
+sum(coins)
+```
+There are 526 tails in the data set. I think sum(coins) counts the tails because the value is more than 0 (maybe it doesn't count any NA kind of values?).
+
+## 5.2 Dice Rolls
+
+Goal: 🎯 Simulate 10,000 rolls of a fair 6‑sided die and plot the results.
+
+Set Notation: \(S\) = {1, 2, 3, 4, 5, 6}
+
+💬 Prediction: How many times do you expect each face to appear? Will the values be exactly equal? Have a normal distribution? Something else?
+
+My prediction: I don't think the values will be exactly equal. I calculated 10,000 divided by 6, which yielded about 1,667. If the distribution was perfectly equal, then we could estimate that each face would appear about 1,665 to 1,669 times. But I think it'll be a fairly normal distribution either way. Now, if it was a loaded die, that would be a different story!
+
+```{r}
+dice <- sample(1:6, 10000, replace = TRUE)
+```
+
+To investigate our hypothesis, we'll visualize the results with a histogram using base R.
+
+# 6 Histograms
+
+Goal: 🎯 Use hist() to create a histogram of the dice rolls, showing the frequency of each face value.
+
+```{r}
+?hist
+```
+
+📜 The SYNTAX: hist(x, breaks, col, main, xlab, ylab)
+
+x is the data to plot
+
+breaks controls the number of bins (or bars)
+
+col sets the color of the bars
+
+main is the title of the plot
+
+xlab and ylab label the x- and y-axes
+
+```{r}
+hist(dice, # The data to plot
+     breaks = 6,
+     col = "lightblue", # Color of the bars
+     main = "10,000 Fair Die Rolls", # Title of the plot
+     xlab = "Face Value") # Label for the x-axis
+```
+
+🗣 The y-axis label is automatically set to “Frequency” by default.
+
+🧐 NOTICE: Bars should be roughly equal height, forming a uniform distribution. That isn’t what we see.
+
+When we specify breaks = 6, base R doesn’t create bins that align perfectly with our integer values 1-6. The bins slice the integers unevenly, leading to misleading bar heights.
+
+Goal: 🎯 Fix the breaks to align with die face values.
+
+```{r}
+hist(dice,
+     breaks = seq(0.5, 6.5, by = 1),  # centers bars on 1:6
+     col    = "lightblue",
+     main   = "10,000 Fair Die Rolls (integer-aligned)",
+     xlab   = "Face Value")
+```
+
+The bars look more even now.
+
+```{r}
+# Alternative display for discrete data 
+barplot(table(dice), 
+        main = "Counts by Die Face (table method)", 
+        col    = "lightblue",
+        xlab = "Face Value", 
+        ylab = "Count")
+```
+
+This provides an alternative way to display the data accurately.
+
+# 7 Two Dice
+
+💬 Prediction: What histogram shape do you expect when summing the face value of two dice? Will the values be exactly equal? Have a normal distribution? Something else?
+
+My prediction: I think it will be a symmetric distribution since it will be rarer for there to be higher values such as 12 or 11 and lower values such as 2 and 3.
+
+Goal: 🎯 Roll two dice 10,000 times, add the results, plot.
+
+```{r}
+sum_two <- sample(1:6, 10000, TRUE) + sample(1:6, 10000, TRUE)
+
+hist(sum_two,
+     breaks = seq(1.5, 12.5, by = 1),  # Creates bins centered on integers 2-12
+     col    = "salmon",
+     main   = "Sum of Two Dice (10,000 trials)",
+     xlab   = "Total")
+```
+
+The histogram shows a bell-shaped (normal), peaking around 7. This shape arises bc there = more combinations to achieve sums near the middle (like 6, 7, and 8) compare to extreme sums (like 2 or 12).
+
+Explore colors! (used the column "salmon" to create the figure. Test out other col options)
+
+```{r}
+colors() # Lists all color names in R
+```
+
+# 8 Symmetric Data
+
+The functions rnorm() generates a vector of random numbers that form a normal (bell-shaped) distribution.
+
+```{r}
+?rnorm # Check the help file for rnorm()
+```
+
+📜 The SYNTAX: rnorm(n, mean = 0, sd = 1)
+
+n is the number of random numbers to generate.
+
+mean is the average value of the distribution.
+
+sd is the standard deviation, controlling the spread of the distribution.
+
+Goal: 🎯 Simulate 1,000 adult female heights ~ \(N(64, 2.5^2)\) and inspect.
+
+```{r}
+# Test
+heights <- rnorm(n = 1000, mean = 64, sd = 2.5)
+```
+
+```{r}
+hist(heights,
+     col = "yellowgreen",
+     main = "Simulated Female Heights",
+     xlab = "Height (inches)")
+```
+
+Note: The breaks = are unnecessary here bc hist() automatically chooses appropriate bins for continuous data.
+
+```{r}
+"Mean = "
+```
+```{r}
+mean(heights)
+```
+```{r}
+"SD = "
+```
+```{r}
+sd(heights)
+```
+
+The histogram shows a bell-shaped distribution of heights, centered around the mean of 64 inches. The spread of the data is consistent with the specified SD of 2.5 inches.
+
+Sample vs. Pop. Parameters: might wonder, "Why aren't the sample mean and SD exactly 64 and 2.5?" This is bc these are random samples from a normal distribution with those parameters. Each time we run the simulation, we get slightly diff values due to sampling variability.
+
+In summary, the function rnorm() generate random numbers from a normal distribution and is used for modeling normally distributed data using the parameters: number of values, mean, and SD. This will only generate symmetric data.
+
+# 9 Repeating Simulation
+
+The replicate() repeats an expression multiple times and collects the results. This control structure = like a loop is used to repeat sample estimate probabilities (simulations), resample data to estimate variability or confidence intervals (bootstrapping), model repeated trials of an experiment, generate synthetic data and more. This function = flexible as it can wrap any code, not just random generation.
+
+That said, Monte Carlo simulations = the classic use case for replicate(). These simulations model are used to understand and manage risk and uncertainty using probabilities.
+
+```{r}
+?replicate
+```
+
+📜 The SYNTAX: replicate(n, expr, simplify = "array")
+
+n is the number of replications.
+
+expr is the expression (a language object, usually a call) to evaluate repeatedly.
+
+simplify indicates whether the result should be simplified to a vector, matrix or array if possible. The default is "array".
+
+Goal: 🎯 How variable is the number of tails in 5,000 flips? Repeat 100 times.
+
+(That's a lot of coin tosses!)
+
+```{r}
+tails_100 <- replicate(n = 100, expr = sum(sample(0:1, 5000, TRUE)))
+```
+
+The replicate() function:
+
+1. Evals the entire expression 100 times (bc n = 100).
+2. Each evaluation = independent (gets its own random sampling)
+3. Store the 100 results in a vector called tails_100.
+
+```{r}
+summary(tails_100)
+```
+
+🗣 Sampling variability show that the number of tails varies across these simulations, with a minimum of 2,412 tails and a maximum of 2,582 tails. The mean number of tails is approximately 2,499, which is close to the expected value of 2,500 for a fair coin.
+
+```{r}
+hist(tails_100,
+     col = "gold",
+     main = "Distribution of Tails in 5,000 Coin Flips (100 reps)",
+     xlab = "Count of Tails")
+```
+🗣 The spread shows sampling variability around the theoretical 2,500.
+
+## 9.1 Normal Data with replicate()
+
+💭 Scenario. Pretend that the university is considering making specifications grading standard practice. The provost’s office says that if thirty percent or more of students oppose this, it would trigger a halt to the proposal. We want to know the risk of the proposal being halted.
+
+We run a survey where student attitudes are measured on a continuous scale:
+
+0 = neutral,
+
+negative values = oppose,
+
+positive values = support.
+
+We’ll first run a random-sample survey of 50 students. Then we simulate many 50-student samples to see how much the number of opponents could vary. That variability informs the proposal planning.
+
+### 9.1.1 Opinion Study
+
+Goal: 🎯 Generate 50 random numbers, compare each to zero, and count how many are below zero.
+
+```{r}
+set.seed(1234)  # For reproducibility
+# Generate 50 random numbers to represent student attitudes from survey
+# with a normal distribution (mean = 2, sd = 3)
+x <- rnorm(n = 50, mean = 2, sd = 3)
+print(x)
+```
+
+🗣 While the average opinion is supportive (mean = 2), some individuals express opposition (negative values). In other words, some values are below zero because the mean is 2, but the standard deviation is 3, allowing for negative values. That’s normal sample-to-sample variation.
+
+```{r}
+# Mark who opposes (score < 0), then count
+below_zero <- x < 0
+print(below_zero)
+
+# Count how many are below zero
+count <- sum(below_zero)
+print(count)
+```
+
+🗣 We generated 50 random numbers from a normal distribution with mean 2 and standard deviation 3. We then compared each number to zero, yielding a logical vector indicating which are below zero. Finally, we summed the logical vector to count the number of values below zero.
+
+### 9.1.2 Many Samples Simulation
+
+Now simulate many realistic samples to understand how the count of opponents might bounce around.
+
+Repeat this process multiple times using replicate(). This time = going to generate 50 random numbers in 200 iterations.
+
+Goal: 🎯 Use replicate to repeat the counts across many simulated samples.
+
+```{r}
+values_below_zero <- replicate(
+  n = 200,                                     # 200 hypothetical survey runs
+  expr = sum(rnorm(50, mean = 2, sd = 3) < 0)) # each run: 50 students, count opponents
+```
+
+Order of Operations:
+
+1. rnorm(n = 50, mean = 2, sd = 3) generates a sample of 50 random numbers.
+
+2. sum(... < 0) counts how many of those numbers are below zero.
+
+3. replicate(n = 200, expr = ...) repeats this process 200 times.
+
+4. The result is a vector of counts, one for each of the 200 samples.
+
+```{r}
+# Useful summaries for discussion
+mean(values_below_zero)   # typical number of opponents
+```
+```{r}
+sd(values_below_zero) # how much the count varies
+```
+```{r}
+quantile(values_below_zero, c(.1, .5, .9)) # 10th/50th/90th percentiles
+```
+
+The means indicates that (on avg) the typical count of those opposed = about 12 across many samples of 50 students. The SD shows that the count of opponents can vary by about 3.1 (check this (the values in the instructions were 9, 13, and 17 respectively for 10%, 50%, and 90%)) from sample to sample. The percentiles provide additional insights into the distribution of opponent counts, indicating that in 10% of the samples, there are 9 or fewer opponents, while in 90% of the samples, there are 16 or fewer opponents.
+
+```{r}
+# Example planning thresholds (adjust to your context)
+mean(values_below_zero >= 15)  # How often do we see ≥15 opponents out of 50?
+```
+If at least 15 opponents trigger a halt, the proposal's risk of being halted is about 25.5% based on our simulations.
+
+```{r}
+# Alternative way to calculate probability of halt
+# One-line simulation estimate:
+risk_halt <- mean(replicate(200, sum(rnorm(50, 2, 3) < 0)) >= 15)
+risk_halt
+```
+(In the instructions, they got a result of 0.2).
+
+```{r}
+# Integer-aligned histogram + shading + on-plot probability
+threshold <- 15
+max_count <- max(values_below_zero)
+breaks_int <- seq(2.5, max_count + 0.5, by = 1)
+
+# ✅  Investigate
+hist(values_below_zero,
+     breaks = breaks_int,
+     col    = "lightpink",
+     main   = "Distribution of Opponents in 50-Student Surveys (200 reps)",
+     xlab   = "Count of Values Below Zero")
+
+
+abline(v = threshold, col = "red", lwd = 2, lty = 2) # Halt threshold
+abline(v = mean(values_below_zero), col = "blue", lwd = 2, lty = 1)  # Mean line
+
+legend("topright", 
+       legend = c("Halt Threshold (15)", "Mean Count"),
+       col = c("red", "blue"),
+       lty = c(2, 1),
+       lwd = 2,
+       bg = "white",
+       bty = "o")
+```
+
+🗣 Each bar shows how often a particular count of opponents appeared across the 200 samples. The center of the histogram is the typical count. The spread shows how much that count changes from sample to sample, even if the underlying social climate doesn’t change. About 1 in 4 samples hit the halt threshold (≥15).
+
+# 10 Fair-Dice Check
+
+Probability weights in sample() let you simulate biased outcomes.
+
+📜 The SYNTAX: sample(x, size, replace = FALSE, prob = NULL)
+
+A fair outcome means that each outcome in the sample space has an equal chance of occurring. For example, a fair six-sided die has an equal probability of landing on any of its faces (1 through 6), which is 1/6 or approximately 0.1667 for each face.
+
+## 10.1 Biased Die
+
+A biased outcome = some outcomes are more likely to occur than others. For example, a biased 6-sided die might have higher prob. of landing on certain faces, such as 1 and 6, while other faces (like 2, 3, 4, and 5) have lower probabilities.
+
+The prob parameter specifies the probability weights for each element in the sampling pool.
+
+Goal: 🎯 Simulate rolling a biased die 1,000 times with specified probabilities.
+
+```{r}
+rolls <- sample(1:6, 1000, prob = c(.12,.13,.07,.23,.22,.23), replace = TRUE)
+```
+
+🗣 This simulates rolling one biased or “loaded” die 1000 times. The length of the prob vector must match the number of sampled values (x = 1:6). The weights usually sum to 1; R will normalize them if they don’t.
+
+```{r}
+# ✅  Verify that relative frequencies should be near the weights
+round(prop.table(table(rolls)), 3)
+```
+
+🗣 The relative frequencies should roughly match the specified probabilities, confirming the bias in the die. The results may vary slightly due to randomness, but over many rolls, they should converge to the specified probabilities.
+
+🛠 Break Things! What happens if the length of prob does not match the length of x? Paste the error message and 1 sentence on why it occurs. What happens if the prob values do not sum to 1? Can you have negative probabilities? You could try sample(1:6, 10, replace = TRUE, prob = c(.5, .5)) and try sample(1:6, 10, replace = TRUE, prob = c(.1, .2, 0.2, .05, .2, .05, .4)) and sample(1:6, 1000, prob = c(.22,-.13,.07,.23,.22,.23), replace = TRUE). Explain what happens and what the rules are for the prob argument in sample(). ___
+
+## 10.2 Fair vs. Unfair Dice
+
+💭 Scenario. You are playing a dice game with a “friend” who claims their dice are fair. 🤔 Your “friend’s” dice look suspiciously unfair. Compare it to our fair dice. We’ll test the your friend’s dice against your fair dice.
+
+Goal: 🎯 Simulate rolling two biased dice 1,000 times and compare to two fair dice. We’ll compare your friend’s results to fair dice by adding the face values of the dice.
+
+```{r}
+# ⚡ Test
+set.seed(8000)
+biased <- c(.12, .13, .07, .23, .22, .23)  # sums to 1
+friend_sum <- sample(1:6, size = 1000, replace = TRUE, prob = biased) +
+  sample(1:6, size = 1000, replace = TRUE, prob = biased)
+```
+
+```{r}
+# ⚡ Test
+fair_sum <- sample(1:6, 1000, TRUE) + sample(1:6, 1000, TRUE) # no 'prob' = equal chance
+```
+
+🗣 The simulates rolling two biased dice 1000 times. This is like you and a friend each rolling two dice 1000 times simultaneously.
+
+Goal: 🎯 Compare the distributions of the sum of two fair dice face values from your friend’s biased dice.
+
+```{r}
+# Proportions of each sum
+ploaded <- prop.table(table(friend_sum))
+pfair <- prop.table(table(fair_sum))
+```
+
+```{r}
+# ✅  Investigate
+# Side-by-side bar plot
+face_props <- rbind(Bias = ploaded, Fair = pfair)
+barplot(face_props,
+        beside = TRUE,
+        col    = c("tomato", "steelblue"),
+        main   = "Probabilities (2 Dice, 1000 rolls)",
+        xlab   = "Added Face Values",
+        ylab   = "Proportion")
+legend("topright", legend = c("Loaded", "Fair"),
+       fill = c("tomato", "steelblue"), bty = "n")
+```
+
+Comment: The blue bars seem mostly taller than the red bars in the first half of the chart, but they start getting shorter then the red bars in the second half of the chart.
+
+
+
